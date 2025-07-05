@@ -8,17 +8,17 @@ I am not an HTML or JavaScript developer. Building this app was only possible wi
 
 ## Feature list
 
-v1 features:
+V1 features:
 * Base map display
 * Selector of base map
 * Draw and edit geospatial polygons
 * Downloa geospatial polygons
 
-V2 features
+V2 features:
 * Upload previously downloaded files to review or edit
 * Deliberate choice of colour, sizes
 
-Outstanding features
+Outstanding features:
 * Instructions showing at start
 * Button to reset map / delete all polygons
 * Clear statement "files only saved locally, nothing is sent to other organisations/people"
