@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toggle Basemap and Draw Polygon</title>
+
+    <!-- Link to ArcGIS CSS -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css">
+
+    <!-- Script to load the ArcGIS API -->
+    <script src="https://js.arcgis.com/4.24/"></script>
+
+    <style>
+        /* Set the size of the map container */
+        #viewDiv {
+            height: 90vh; /* Adjust to leave room for the dropdown */
+            width: 100%;  /* Full page width */
+        }
+
+        /* Style the dropdown */
+        #basemapSelect {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 5px 10px;
+            background-color: white;
+            font-size: 14px;
+            z-index: 99;
+        }
+
+        /* Style the draw button */
+        #drawButton {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            padding: 5px 10px;
+            background-color: white;
+            font-size: 14px;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+    <!-- Dropdown to select the basemap -->
+    <select id="basemapSelect">
+        <option value="streets">Streets</option>
+        <option value="satellite">Satellite</option>
+    </select>
+
+    <!-- Button to enable drawing -->
+    <button id="drawButton">Draw Polygon</button>
+
+    <!-- Map container -->
+    <div id="viewDiv"></div> <!-- The map will be displayed here -->
+
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/widgets/Sketch",
+            "esri/Graphic",
+            "esri/geometry/Polygon",
+            "esri/layers/GraphicsLayer",
+            "esri/widgets/Sketch/SketchViewModel"
+        ], function(Map, MapView, Sketch, Graphic, Polygon, GraphicsLayer, SketchViewModel) {
+            // Create a Map with an initial basemap
+            var map = new Map({
+                basemap: "streets" // Initial basemap
+            });
+
+            // Create a GraphicsLayer to hold drawn graphics
+            var graphicsLayer = new GraphicsLayer();
+            map.add(graphicsLayer);
+
+            // Create the MapView with the center of New Zealand
+            var view = new MapView({
+                container: "viewDiv", // The HTML container ID
+                map: map,             // The map object
+                center: [174.7850, -40.9006], // Longitude, Latitude of New Zealand
+                zoom: 5               // Suitable zoom level to view all of New Zealand
+            });
+
+            // Create a SketchViewModel to handle the drawing functionality
+            var sketchViewModel = new SketchViewModel({
+                view: view,
+                layer: graphicsLayer, // Where the drawing will be stored
+                polygonSymbol: {      // Symbol for the drawn polygon
+                    type: "simple-fill",
+                    color: [255, 0, 0, 0.3], // Red with 30% opacity
+                    outline: {
+                        color: [255, 0, 0], // Red outline
+                        width: 2
+                    }
+                }
+            });
+
+            // When the "Draw Polygon" button is clicked, start drawing
+            document.getElementById("drawButton").addEventListener("click", function() {
+                sketchViewModel.create("polygon"); // Start drawing a polygon
+            });
+
+            // Add an event listener to the dropdown to change the basemap
+            var basemapSelect = document.getElementById("basemapSelect");
+            basemapSelect.addEventListener("change", function(event) {
+                var selectedBasemap = event.target.value;
+                map.basemap = selectedBasemap;
+            });
+
+            // Handle the completion of drawing the polygon
+            sketchViewModel.on("create-complete", function(event) {
+                var graphic = event.graphic; // The drawn polygon graphic
+                console.log("Polygon drawn:", graphic);
+
+                // Optionally, you can do something with the drawn polygon
+                // For example, save its geometry or perform analysis
+            });
+			
+			// Listen for the start of the update (editing) process
+			sketchViewModel.on("update-start", function(event) {
+				console.log("Started editing the polygon");
+			});
+
+			// Listen for when the update (editing) process is completed
+			sketchViewModel.on("update-complete", function(event) {
+				console.log("Editing complete");
+				// You can access the modified geometry here
+				var updatedGraphic = event.graphic; // This is the edited polygon
+				console.log("Updated polygon geometry:", updatedGraphic.geometry);
+			});
+
+
+        });
+    </script>
+</body>
+</html>

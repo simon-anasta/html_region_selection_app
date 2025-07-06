@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export GraphicsLayer</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.23/"></script>
+</head>
+<body>
+    <div id="viewDiv" style="width: 100%; height: 100vh;"></div>
+    <button id="exportButton">Export Graphics</button>
+
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/layers/GraphicsLayer",
+            "esri/Graphic",
+            "esri/geometry/Point",
+            "esri/geometry/Polygon",
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/symbols/SimpleFillSymbol",
+            "esri/geometry/Polyline"
+        ], function(Map, MapView, GraphicsLayer, Graphic, Point, Polygon, SimpleMarkerSymbol, SimpleFillSymbol, Polyline) {
+
+            // Create a new map and view
+            var map = new Map({
+                basemap: "streets-navigation-vector"
+            });
+
+            var view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [-118.80500, 34.02700],
+                zoom: 13
+            });
+
+            // Create a GraphicsLayer and add it to the map
+            var graphicsLayer = new GraphicsLayer();
+            map.add(graphicsLayer);
+
+            // Add a sample graphic (point)
+            var point = new Point({
+                longitude: -118.80500,
+                latitude: 34.02700
+            });
+            var pointSymbol = new SimpleMarkerSymbol({
+                color: [226, 119, 40],  // Orange
+                outline: {
+                    color: [255, 255, 255], // White
+                    width: 2
+                }
+            });
+            var pointGraphic = new Graphic({
+                geometry: point,
+                symbol: pointSymbol
+            });
+            graphicsLayer.add(pointGraphic);
+
+            // Add another sample graphic (polygon)
+            var polygon = new Polygon({
+                rings: [
+                    [-118.821527, 34.013957],
+                    [-118.813762, 34.013957],
+                    [-118.813762, 34.020485],
+                    [-118.821527, 34.020485],
+                    [-118.821527, 34.013957]
+                ]
+            });
+            var fillSymbol = new SimpleFillSymbol({
+                color: [51, 51, 204, 0.3], // Blue with transparency
+                outline: {
+                    color: [51, 51, 204],
+                    width: 2
+                }
+            });
+            var polygonGraphic = new Graphic({
+                geometry: polygon,
+                symbol: fillSymbol
+            });
+            graphicsLayer.add(polygonGraphic);
+
+            // Function to export the graphics to GeoJSON
+            function exportGraphicsToGeoJSON() {
+                var graphics = graphicsLayer.graphics;
+                var geojson = {
+                    type: "FeatureCollection",
+                    features: []
+                };
+
+                graphics.forEach(function(graphic) {
+                    var feature = {
+                        type: "Feature",
+                        geometry: graphic.geometry.toJSON(),
+                        properties: graphic.attributes || {}
+                    };
+                    geojson.features.push(feature);
+                });
+
+                // Create a Blob from the GeoJSON data
+                var blob = new Blob([JSON.stringify(geojson)], { type: "application/json" });
+
+                // Create a download link
+                var link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "graphics-layer.geojson";
+                link.click();
+            }
+
+            // Event listener for the export button
+            document.getElementById("exportButton").addEventListener("click", exportGraphicsToGeoJSON);
+
+        });
+    </script>
+</body>
+</html>

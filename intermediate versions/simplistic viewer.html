@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toggle Basemap</title>
+
+    <!-- Link to ArcGIS CSS -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css">
+
+    <!-- Script to load the ArcGIS API -->
+    <script src="https://js.arcgis.com/4.24/"></script>
+
+    <style>
+        /* Set the size of the map container */
+        #viewDiv {
+            height: 90vh; /* Adjust to leave room for the dropdown */
+            width: 100%;  /* Full page width */
+        }
+
+        /* Style the dropdown */
+        #basemapSelect {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 5px 10px;
+            background-color: white;
+            font-size: 14px;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+    <!-- Dropdown to select the basemap -->
+    <select id="basemapSelect">
+        <option value="streets-vector">Streets</option>
+        <option value="satellite">Satellite</option>
+    </select>
+
+    <!-- Map container -->
+    <div id="viewDiv"></div> <!-- The map will be displayed here -->
+
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView"
+        ], function(Map, MapView) {
+            // Create a Map with an initial basemap
+            var map = new Map({
+                basemap: "streets-vector" // Initial basemap
+            });
+
+            // Create the MapView
+            var view = new MapView({
+                container: "viewDiv", // The HTML container ID
+                map: map,             // The map object
+                center: [174.7850, -40.9006], // Longitude, Latitude (California)
+                zoom: 5              // Initial zoom level
+            });
+
+            // Add an event listener to the dropdown
+            var basemapSelect = document.getElementById("basemapSelect");
+            basemapSelect.addEventListener("change", function(event) {
+                // Change the basemap based on the selected option
+                var selectedBasemap = event.target.value;
+                map.basemap = selectedBasemap;
+            });
+        });
+    </script>
+</body>
+</html>

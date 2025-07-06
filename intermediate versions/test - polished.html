@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draw, Edit, and Export Polygon as GeoJSON</title>
+
+    <!-- Link to ArcGIS CSS -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/light/main.css">
+
+    <!-- Script to load the ArcGIS API -->
+    <script src="https://js.arcgis.com/4.24/"></script>
+
+    <style>
+        /* Set the size of the map container */
+        #viewDiv {
+            height: 95vh; /* Adjust to leave room for the dropdown */
+            width: 100%;  /* Full page width */
+        }
+
+		/* Common styling for all elements to be the same size */
+		#basemapSelect, #drawButton, #downloadButton {
+			width: 120px; /* Set a fixed width for all elements */
+			height: 35px; /* Set a fixed height for all elements */
+			padding: 5px 10px; /* Same padding for consistency */
+			font-size: 14px; /* Same font size for all elements */
+			background-color: white; /* Same background color for all elements */
+			z-index: 99;
+		}
+
+		/* Style the dropdown */
+		#basemapSelect {
+			position: absolute;
+			top: 20px;
+			right: 20px;
+		}
+
+		/* Style the draw button */
+		#drawButton {
+			position: absolute;
+			top: 70px;
+			right: 20px;
+		}
+
+		/* Style the download button */
+		#downloadButton {
+			position: absolute;
+			top: 120px;
+			right: 20px;
+		}
+    </style>
+	
+	<script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/widgets/Sketch",
+            "esri/Graphic",
+            "esri/geometry/Polygon",
+            "esri/layers/GraphicsLayer",
+            "esri/widgets/Sketch/SketchViewModel",
+            "esri/geometry/Geometry",
+            "esri/geometry/SpatialReference"
+        ], function(Map, MapView, Sketch, Graphic, Polygon, GraphicsLayer, SketchViewModel, Geometry, SpatialReference) {
+            // Create a Map with an initial basemap
+            var map = new Map({
+                basemap: "streets-vector" // Initial basemap
+            });
+
+            // Create a GraphicsLayer to hold drawn graphics
+            window.graphicsLayer = new GraphicsLayer();
+            map.add(window.graphicsLayer);
+
+            // Create the MapView with the center of New Zealand
+            var view = new MapView({
+                container: "viewDiv", // The HTML container ID
+                map: map,             // The map object
+                center: [174.7850, -40.9006], // Longitude, Latitude of New Zealand
+                zoom: 5               // Suitable zoom level to view all of New Zealand
+            });
+
+            // Create a SketchViewModel to handle the drawing functionality
+            var sketchViewModel = new SketchViewModel({
+                view: view,
+                layer: graphicsLayer, // Where the drawing will be stored
+                polygonSymbol: {      // Symbol for the drawn polygon
+                    type: "simple-fill",
+                    color: [255, 0, 0, 0.3], // Red with 30% opacity
+                    outline: {
+                        color: [255, 0, 0], // Red outline
+                        width: 2
+                    }
+                }
+            });
+
+            // When the "Draw Polygon" button is clicked, start drawing
+            document.getElementById("drawButton").addEventListener("click", function() {
+				sketchViewModel.create("polygon"); // Start drawing a polygon
+            });
+
+            // Event listener to change basemap
+            var basemapSelect = document.getElementById("basemapSelect");
+            basemapSelect.addEventListener("change", function(event) {
+                var selectedBasemap = event.target.value;
+                map.basemap = selectedBasemap;
+            });
+
+			// Event listener for the export button
+			document.getElementById("downloadButton").addEventListener("click", exportGraphicsToGeoJSON);
+
+			// Function to export the graphics to GeoJSON
+			function exportGraphicsToGeoJSON() {
+				var graphics = graphicsLayer.graphics;
+				var geojson = {
+					type: "FeatureCollection",
+					features: []
+				};
+
+				graphics.forEach(function(graphic) {
+					var feature = {
+						type: "Feature",
+						geometry: graphic.geometry.toJSON(),
+						properties: graphic.attributes || {}
+					};
+					geojson.features.push(feature);
+				});
+
+				// Create a Blob from the GeoJSON data
+				var blob = new Blob([JSON.stringify(geojson)], { type: "application/json" });
+
+				// Create a download link
+				var link = document.createElement("a");
+				link.href = URL.createObjectURL(blob);
+				link.download = "custom_area.geojson";
+				link.click();
+			}
+            
+        });
+    </script>
+
+</head>
+<body>
+    <!-- Dropdown to select the basemap -->
+    <select id="basemapSelect">
+        <option value="streets-vector">Street map</option>
+        <option value="satellite">Satellite map</option>
+    </select>
+
+    <!-- Button to enable drawing -->
+    <button id="drawButton">Draw Area</button>
+
+    <!-- Button to download GeoJSON -->
+    <button id="downloadButton">Download</button>
+
+    <!-- Map container -->
+    <div id="viewDiv"></div> <!-- The map will be displayed here -->
+
+</body>
+</html>
