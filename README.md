@@ -18,6 +18,10 @@ V2 features:
 * Upload previously downloaded files to review or edit
 * Deliberate choice of colour, sizes
 
+V3 features:
+* Export and import is now GeoJSON, not ESRI JSON
+* Project used is GeoJSON standard (WGS 84, EPSG:4326)
+
 Outstanding features:
 * Instructions showing at start
 * Button to reset map / delete all polygons
