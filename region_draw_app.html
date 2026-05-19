@@ -83,8 +83,9 @@
             "esri/layers/GraphicsLayer",
             "esri/widgets/Sketch/SketchViewModel",
             "esri/geometry/Geometry",
-            "esri/geometry/SpatialReference"
-        ], function(Map, MapView, Sketch, Graphic, Polygon, GraphicsLayer, SketchViewModel, Geometry, SpatialReference) {
+            "esri/geometry/SpatialReference",
+			"esri/geometry/support/jsonUtils"
+        ], function(Map, MapView, Sketch, Graphic, Polygon, GraphicsLayer, SketchViewModel, Geometry, SpatialReference, geometryJsonUtils) {
             // Create a Map with an initial basemap
             var map = new Map({
                 basemap: "streets-vector" // Initial basemap
@@ -195,50 +196,59 @@
             }
 
             function addGeoJSONToGraphicsLayer(geojson) {
-                // Ensure the GeoJSON is a FeatureCollection and has the 'features' property
-                if (geojson.type === "FeatureCollection" && geojson.features) {
-                    const features = geojson.features;
 
-                    // Clear any existing graphics in the graphicsLayer
-                    //graphicsLayer.removeAll();
+				// Ensure the GeoJSON is a FeatureCollection and has the 'features' property
+                if (geojson.type !== "FeatureCollection" || !geojson.features) {
+					alert("The uploaded GeoJSON file is not a valid FeatureCollection.");
+					return;
+				}
+				
+				// Clear any existing graphics in the graphicsLayer
+				//graphicsLayer.removeAll();
 
-                    features.forEach(function(feature) {
-                        let geometry;
-                        let symbol;
+				geojson.features.forEach(function(feature) {
+				
+					if (feature.type !== "Feature") {
+						console.log("Unknown geometry type: " + feature.type);
+						return;
+					}
 
-                        // Handle each geometry type in the GeoJSON
-						if (feature.type === "Feature") {
-								console.log("making new");
-                                geometry = new Polygon(feature.geometry);
-                                symbol = {
-                                    type: "simple-fill",
-									color: [244, 124, 032, 0.3], // Red with 30% opacity
-									outline: {
-										color: [244, 124, 032], // Red outline
-										width: 2
-									}
-                                };
+					const raw = TerraformerArcGIS.geojsonToArcGIS(feature.geometry);
+					
+					let geometry;
+					let symbol;
+					if (raw.rings) {
+						// polygon
+						geometry = new Polygon({
+							rings: raw.rings,
+							spatialReference: { wkid: 3857 }
+						});
+						symbol = {
+							  type: "simple-fill",
+							  color: [244, 124, 32, 0.3],
+							  outline: {
+								  color: [244, 124, 32],
+								  width: 2
+							  }
+						  };
+					}
+					else {
+						console.warn("Unsupported geometry type");
+						return;
+					}
 
-                        // Create a new Graphic for each feature
-                        const graphic = new Graphic({
-                            geometry: geometry,
-                            symbol: symbol,
-                            attributes: feature.properties
-                        });
-
-                        // Add the graphic to the GraphicsLayer
-                        graphicsLayer.add(graphic);
-						
-						} else {
-						       console.log("Unknown geometry type: " + feature.geometry.type);
-                         
-						}
-
-                    });
-                } else {
-                    alert("The uploaded GeoJSON file is not a valid FeatureCollection.");
-                }
-            }
+					// Create a new Graphic for each feature
+					const graphic = new Graphic({
+						geometry: geometry,
+						symbol: symbol,
+						attributes: feature.properties || {}
+					});
+					
+					// Add the graphic to the GraphicsLayer
+					graphicsLayer.add(graphic);
+				});
+			}
+			
         });
     </script>
 
