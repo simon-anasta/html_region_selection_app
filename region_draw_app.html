@@ -10,6 +10,17 @@
 
     <!-- Script to load the ArcGIS API -->
     <script src="https://js.arcgis.com/4.24/"></script>
+	
+	<script type="module">
+	  import * as mod from "https://unpkg.com/@terraformer/arcgis?module";
+
+	  console.log("ready:", mod.arcgisToGeoJSON);
+	  
+	  window.TerraformerArcGIS = {
+		arcgisToGeoJSON: mod.arcgisToGeoJSON,
+		geojsonToArcGIS: mod.geojsonToArcGIS
+	  };
+	</script>
 
     <style>
         /* Set the size of the map container */
@@ -123,6 +134,12 @@
 
 			// Function to export the graphics to GeoJSON
 			function exportGraphicsToGeoJSON() {
+			
+			// Confirm availability of dependencies
+			console.log("global:", window.TerraformerArcGIS);
+			console.log("type:", typeof window.TerraformerArcGIS?.arcgisToGeoJSON);
+			console.log("keys:", Object.keys(window.TerraformerArcGIS));
+			
 				var graphics = graphicsLayer.graphics;
 				var geojson = {
 					type: "FeatureCollection",
@@ -130,16 +147,21 @@
 				};
 
 				graphics.forEach(function(graphic) {
+
+					// Convert ESRI geometry to GeoJSON geometry
+					var geoGeometry = window.TerraformerArcGIS.arcgisToGeoJSON(graphic.geometry.toJSON());
+
 					var feature = {
 						type: "Feature",
-						geometry: graphic.geometry.toJSON(),
+						geometry: geoGeometry,
 						properties: graphic.attributes || {}
 					};
+
 					geojson.features.push(feature);
 				});
 
 				// Create a Blob from the GeoJSON data
-				var blob = new Blob([JSON.stringify(geojson)], { type: "application/json" });
+				var blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
 
 				// Create a download link
 				var link = document.createElement("a");
