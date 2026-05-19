@@ -83,9 +83,10 @@
             "esri/layers/GraphicsLayer",
             "esri/widgets/Sketch/SketchViewModel",
             "esri/geometry/Geometry",
+			"esri/geometry/projection",
             "esri/geometry/SpatialReference",
 			"esri/geometry/support/jsonUtils"
-        ], function(Map, MapView, Sketch, Graphic, Polygon, GraphicsLayer, SketchViewModel, Geometry, SpatialReference, geometryJsonUtils) {
+        ], function(Map, MapView, Sketch, Graphic, Polygon, GraphicsLayer, SketchViewModel, Geometry, projection, SpatialReference, geometryJsonUtils) {
             // Create a Map with an initial basemap
             var map = new Map({
                 basemap: "streets-vector" // Initial basemap
@@ -134,43 +135,53 @@
 			document.getElementById("downloadButton").addEventListener("click", exportGraphicsToGeoJSON);
 
 			// Function to export the graphics to GeoJSON
-			function exportGraphicsToGeoJSON() {
-			
-			// Confirm availability of dependencies
-			console.log("global:", window.TerraformerArcGIS);
-			console.log("type:", typeof window.TerraformerArcGIS?.arcgisToGeoJSON);
-			console.log("keys:", Object.keys(window.TerraformerArcGIS));
-			
-				var graphics = graphicsLayer.graphics;
-				var geojson = {
+			async function exportGraphicsToGeoJSON() {
+				// Confirm availability of dependencies
+				console.log("global:", window.TerraformerArcGIS);
+
+				const graphics = graphicsLayer.graphics.toArray(); //var graphics = graphicsLayer.graphics;
+
+				await projection.load();
+
+				const features = await Promise.all(
+					graphics.map(async (graphic) => {
+						// Convert ESRI geometry to GeoJSON geometry
+						const projectedGeometry = projection.project(
+							graphic.geometry,
+							new SpatialReference({ wkid: 4326 })
+						);
+
+						const geoGeometry =
+							window.TerraformerArcGIS.arcgisToGeoJSON(
+								projectedGeometry.toJSON()
+							);
+
+						return {
+							type: "Feature",
+							geometry: geoGeometry,
+							properties: graphic.attributes || {}
+						};
+					})
+				);
+
+				const geojson = {
 					type: "FeatureCollection",
-					features: []
+					features: features
 				};
 
-				graphics.forEach(function(graphic) {
-
-					// Convert ESRI geometry to GeoJSON geometry
-					var geoGeometry = window.TerraformerArcGIS.arcgisToGeoJSON(graphic.geometry.toJSON());
-
-					var feature = {
-						type: "Feature",
-						geometry: geoGeometry,
-						properties: graphic.attributes || {}
-					};
-
-					geojson.features.push(feature);
-				});
-
 				// Create a Blob from the GeoJSON data
-				var blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/geo+json" });
+				const blob = new Blob(
+					[JSON.stringify(geojson, null, 2)],
+					{ type: "application/geo+json" }
+				);
 
 				// Create a download link
-				var link = document.createElement("a");
+				const link = document.createElement("a");
 				link.href = URL.createObjectURL(blob);
 				link.download = "custom_area.geojson";
 				link.click();
 			}
-            
+
 			///////////////////////////////////////////////////////////////////////////////////////
 			// Handle file upload
             document.getElementById('uploadButton').addEventListener('click', function() {
@@ -221,7 +232,7 @@
 						// polygon
 						geometry = new Polygon({
 							rings: raw.rings,
-							spatialReference: { wkid: 3857 }
+							spatialReference: { wkid: 4326 }
 						});
 						symbol = {
 							  type: "simple-fill",
