@@ -2,6 +2,8 @@
 
 This app follows from a previous attempt to develop an area selection app in R Shiny ([here](https://github.com/simon-anasta/region_selection_app)). A colleague had attempted to vibe code similar funtionality as a web page. Seeing the advantage over using Shiny (no dependence upon R, simpler to deploy), and knowing such a thing was possible, I decided to make my own attempt.
 
+You can download the HTML file to have your own copy of the app or you can launch it direct from here: [region draw app](https://simon-anasta.github.io/html_region_selection_app/region_draw_app.html). Note that the app uses a collection of publically available packages (ERSI, ArcGIS, and street-map) and hence is not available offline.
+
 ## Coding with AI
 
 I am not an HTML or JavaScript developer. Building this app was only possible with extensive use of ChatGPT. However, almost every code snippet ChatGPT suggested was wrong in some way. The end result is my synthesis of ChatGPT's code suggestions - using my knowledge of how programming works in general, with ChatGPT's ability to provide examples of (near) working code in languages that are unfamiliar to me.
